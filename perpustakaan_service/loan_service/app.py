@@ -76,14 +76,27 @@ def create_loan():
     if not member_id or not book_id:
         return jsonify({"error": "member_id dan book_id diperlukan"}), 400
 
+    # Validasi member dari member_service
+    member_resp = requests.get(f"http://localhost:5002/members/{member_id}")
+    if member_resp.status_code != 200:
+        return jsonify({"error": "Anggota tidak ditemukan"}), 404
+
+    # Validasi buku dari book_service
+    book_resp = requests.get(f"http://localhost:5001/books/{book_id}")
+    if book_resp.status_code != 200:
+        return jsonify({"error": "Buku tidak ditemukan"}), 404
+
     try:
+        # Simpan ke database peminjaman
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("INSERT INTO loans (member_id, book_id) VALUES (?, ?)", (member_id, book_id))
             conn.commit()
+
         return jsonify({'message': 'Peminjaman berhasil dibuat'}), 201
     except Exception as e:
         return jsonify({'error': f'Gagal membuat peminjaman - {e}'}), 500
+
 
 # --- Menjalankan Aplikasi ---
 if __name__ == '__main__':
