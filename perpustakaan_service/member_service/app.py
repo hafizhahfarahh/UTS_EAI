@@ -151,13 +151,8 @@ def delete_member(member_id):
 
 
 # Endpoint: GET /members/<int:member_id>/loans
-# Berperan sebagai consumer dari loan_service
 @app.route('/members/<int:member_id>/loans', methods=['GET'])
 def get_member_loan_history(member_id):
-    """
-    Mengambil riwayat peminjaman buku oleh anggota dari loan_service.
-    Berperan sebagai consumer untuk loan_service.
-    """
     try:
         # Periksa apakah anggota ada
         with get_db_connection() as conn:
@@ -208,13 +203,8 @@ def get_member_loan_history(member_id):
         return jsonify({'error': 'Kesalahan server internal'}), 500
 
 # Endpoint: GET /members/<int:member_id>/summary
-# Berisi informasi lengkap anggota termasuk riwayat peminjaman dan status
 @app.route('/members/<int:member_id>/summary', methods=['GET'])
 def get_member_summary(member_id):
-    """
-    Menghasilkan ringkasan lengkap tentang anggota termasuk data diri,
-    riwayat dan status peminjaman buku saat ini.
-    """
     try:
         # Ambil data anggota
         with get_db_connection() as conn:
