@@ -1,17 +1,18 @@
-Dokumentasi API Perpustakaan_Service
+# Dokumentasi API Perpustakaan_Service
 
 **Deskripsi Umum**
 Perpustakaan_Service adalah sebuah layanan terintegrasi berbasis arsitektur microservices yang dirancang untuk mengelola berbagai aktivitas dalam sebuah sistem perpustakaan digital. Sistem ini dibangun menggunakan Flask-RESTful dan database SQLite, serta terdiri dari beberapa layanan terpisah yang saling berkomunikasi melalui REST API menggunakan format JSON.
 
-**Struktur Layanan**
+### Struktur Layanan
 Sistem ini terdiri dari 4 layanan utama, yaitu:
 1. **Book_Service**, yaitu untuk mengelola data buku.
 2. **Member_Service**, yaitu untuk mengelola data anggota perpustakaan.
+    - member_data.db : SQLite database untuk menyimpan data anggota.
 3. **Loan_Service**, yaitu untuk mengelola aktivitas peminjaman buku oleh angggota.
 4. **Review_Service**, yaitu untuk mengelola ulasan atau review yang diberikan oleh anggota terhadap buku yang telah dipinjam.
 
-**Book_Service**
-Dokumentasi API
+## Book_Service**
+### Dokumentasi API
 Base URL : http://localhost:5003
     1.  GET /books/<int:book_id>/check_availability
     Deskripsi:
@@ -255,12 +256,203 @@ http://127.0.0.1:5004/reviews/book/1
 
 
 
-**Member_Service**
+## Member_Service
 
+### Dokumentasi API
+    Base URL: http://localhost:5002
+    1. POST /members
+    Deskripsi: Menambahkan anggota baru ke dalam sistem.
 
-**Loan_Service**
+    - Request Header: Content-Type: application/json
+    - Request Body:
+    {
+      "name": "Elsa Tria Lestari",
+      "phone_number": "082345678901"
+    }
 
-*Dokumentasi API*
+    - Response (201 Created):
+    {
+      "id": 1,
+      "name": "Elsa Tria Lestari",
+      "phone_number": "082345678901"
+    }
+
+    - Status Code:
+      -400 Bad Request: jika name tidak disediakan.
+      -500 Internal Server Error: jika terjadi kesalahan pada server.
+    
+    2. GET /members
+    Deskripsi: Mengambil seluruh data anggota yang tersimpan.
+
+    - Response (200 OK):
+    [
+      {
+        "id": 1,
+        "name": "Elsa Tria Lestari",
+        "phone_number": "082345678901"
+      }
+    ]
+
+    -Status Code:
+      - 200 OK jika berhasil.
+      - 500 Internal Server Error jika terjadi kesalahan server.
+
+    3. GET /members/int:member_id
+    Deskripsi: Mengambil data satu anggota berdasarkan member_id.
+
+    - Path Parameter: member_id (integer)
+    - Response (200 OK):
+    {
+      "id": 1,
+      "name": "Elsa Tria Lestari",
+      "phone_number": "082345678901"
+    }
+
+    -Status Code:
+      - 404 Not Found: jika anggota tidak ditemukan.
+      - 500 Internal Server Error: jika terjadi kesalahan server.
+    
+    4. PUT /members/int:member_id
+    Deskripsi: Memperbarui data anggota berdasarkan member_id.
+
+    - Request Header: Content-Type: application/json
+    - Request Body:
+    {
+      "name": "Elsa Tria Lestari Update",
+      "phone_number": "082345678901"
+    }
+
+    - Response (200 OK):
+    {
+      "message": "Anggota berhasil diperbarui"
+    }
+
+    - Status Code:
+      - 400 Bad Request: jika name kosong.
+      - 404 Not Found: jika anggota tidak ditemukan.
+      - 500 Internal Server Error: jika terjadi kesalahan server.
+    
+    5. DELETE /members/int:member_id
+    Deskripsi: Menghapus anggota dari sistem berdasarkan member_id.
+
+    - Path Parameter: member_id (integer)
+    - Response (200 OK):
+    {
+      "message": "Anggota berhasil dihapus"
+    }
+    
+    - Status Code:
+      - 404 Not Found: jika anggota tidak ditemukan.
+      - 500 Internal Server Error: jika terjadi kesalahan server.
+
+    6. GET /members/int:member_id/loans
+    Deskripsi: Mengambil riwayat peminjaman buku dari anggota tertentu dengan enrich informasi buku (menghubungi Loan Service dan Book Service).
+
+    - Path Parameter: member_id (integer)
+    - Response (200 OK):
+    {
+      "loan_history": [
+        {
+          "book_id": 1,
+          "book_info": {
+            "author": "Brian Khrisna",
+            "id": 1,
+            "title": "Seporsi Mie Ayam sebelum Mati",
+            "year": 2024
+          },
+          "denda": 0,
+          "loan_id": 1,
+          "status": "dikembalikan",
+          "tanggal_jatuh_tempo": "2025-05-02",
+          "tanggal_peminjaman": "2025-04-25",
+          "tanggal_pengembalian": "2025-04-25"
+        },
+        {
+          "book_id": 1,
+          "book_info": {
+            "author": "Brian Khrisna",
+            "id": 1,
+            "title": "Seporsi Mie Ayam sebelum Mati",
+            "year": 2024
+          },
+          "denda": 0,
+          "loan_id": 3,
+          "status": "dikembalikan",
+          "tanggal_jatuh_tempo": "2025-05-02",
+          "tanggal_peminjaman": "2025-04-25",
+          "tanggal_pengembalian": "2025-04-25"
+        }
+      ],
+      "member": {
+        "id": 1,
+        "name": "Elsa Tria Lestari",
+        "phone_number": "082345678901"
+      }
+    }
+
+    - Status Code:
+      - 404 Not Found: jika anggota tidak ditemukan.
+      - 503 Service Unavailable: jika gagal menghubungi Loan Service.
+      - 500 Internal Server Error: jika terjadi kesalahan server.
+
+    7. GET /members/int:member_id/summary
+    Deskripsi: Menampilkan ringkasan lengkap anggota termasuk data pribadi, statistik pinjam, dan total denda.
+
+    - Path Parameter: member_id (integer)
+    - Response (200 OK):
+    {
+      "loan_history": [
+        {
+          "book_id": 1,
+          "denda": 0,
+          "loan_id": 1,
+          "status": "dikembalikan",
+          "tanggal_jatuh_tempo": "2025-05-02",
+          "tanggal_peminjaman": "2025-04-25",
+          "tanggal_pengembalian": "2025-04-25"
+        },
+        {
+          "book_id": 1,
+          "denda": 0,
+          "loan_id": 3,
+          "status": "dikembalikan",
+          "tanggal_jatuh_tempo": "2025-05-02",
+          "tanggal_peminjaman": "2025-04-25",
+          "tanggal_pengembalian": "2025-04-25"
+        }
+      ],
+      "loan_stats": {
+        "active_loans": 0,
+        "returned_loans": 2,
+        "total_fines": 0,
+        "total_loans": 2
+      },
+      "member": {
+        "id": 1,
+        "name": "Elsa Tria Lestari",
+        "phone_number": "082345678901"
+      }
+    }
+
+    - Status Code:
+      - 404 Not Found: jika anggota tidak ditemukan.
+      - 200 OK dengan pesan error pada bagian loan_history jika gagal menghubungi Loan Service.
+      - 500 Internal Server Error: jika terjadi kesalahan server.
+
+### Dokumentasi Komunikasi Antar Layanan
+    - Member Service sebagai Provider:
+      - Menyediakan data anggota untuk layanan lain melalui endpoint:
+        - GET /members/<member_id>  (Digunakan oleh Loan Service untuk validasi member_id sebelum membuat peminjaman.)
+      
+    - Member Service sebagai Consumer:
+      - Mengambil riwayat peminjaman dari:
+        - Loan Service: GET /loans/history/<member_id>  (Untuk mendapatkan daftar peminjaman anggota tertentu.)
+      - Mengambil informasi buku dari:
+        - Book Service: GET /books/<book_id>  (Untuk melengkapi data peminjaman dengan informasi detail buku (judul, penulis, dll).)
+
+## Loan_Service 
+
+### Dokumentasi API
 
     Base URL: http://localhost:5003
     1. GET /books/<int:book_id>/check_availability
@@ -374,7 +566,7 @@ http://127.0.0.1:5004/reviews/book/1
         - 500 Internal Server Error jika terjadi kegagalan di server.
         
 
-*Dokumentasi Komunikasi Antar Layanan*
+### Dokumentasi Komunikasi Antar Layanan
 
     - Loan-Service adalah consumer saat mengambil data dari Book-Service dan Member-Service. 
     Berikut interaksinya:
@@ -388,9 +580,9 @@ http://127.0.0.1:5004/reviews/book/1
         - DELETE `/loans/<loan_id>/cancel` (membatalkan peminjaman)
         
 
-**Review_Service**
+## Review_Service
 
-*Dokumentasi API*
+### Dokumentasi API
 
     Base URL: http://localhost:5004
 
@@ -487,7 +679,7 @@ http://127.0.0.1:5004/reviews/book/1
         - 500 Internal Server Error jika terjadi kegagalan di server
 
 
-*Dokumentasi Komunikasi Antar Layanan*
+### Dokumentasi Komunikasi Antar Layanan
 
     - Review-Service adalah consumer saat mengambil data dari Book_Service, Member_Service, dan Loan_Service. Berikut interaksinya:
         - Book_Service: GET /books/<book_id> (mengambil title dan author buku)
