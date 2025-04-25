@@ -9,6 +9,7 @@ app = Flask(__name__)
 DB_NAME = "loan_data.db"
 DB_PATH = os.path.join(os.path.dirname(__file__), DB_NAME)
 
+# Fungsi untuk mengelola koneksi ke database SQLite
 @contextlib.contextmanager
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -17,6 +18,7 @@ def get_db_connection():
     finally:
         conn.close()
 
+# Fungsi untuk inisialisasi database dan membuat tabel 'loans' jika belum ada
 def init_db():
     try:
         with get_db_connection() as conn:
@@ -39,37 +41,23 @@ def init_db():
         print(f"Provider Peminjaman: Gagal inisialisasi DB '{DB_NAME}' - {e}")
         raise
 
-@app.route('/loans', methods=['GET'])
-def get_loans():
+# Fungsi untuk memeriksa apakah buku masih tersedia untuk dipinjam
+@app.route('/books/<int:book_id>/check_availability', methods=['GET'])
+def check_book_availability(book_id):
     try:
         with get_db_connection() as conn:
-            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM loans")
-            loans = cursor.fetchall()
+            cursor.execute("SELECT COUNT(*) FROM loans WHERE book_id = ? AND status = 'dipinjam'", (book_id,))
+            count = cursor.fetchone()[0]
 
-        loan_list = []
-        for loan in loans:
-            loan_dict = dict(loan)
-            member_resp = requests.get(f"http://localhost:5002/members/{loan_dict['member_id']}")
-            book_resp = requests.get(f"http://localhost:5001/books/{loan_dict['book_id']}")
-            member = member_resp.json() if member_resp.status_code == 200 else {'error': 'Anggota tidak ditemukan'}
-            book = book_resp.json() if book_resp.status_code == 200 else {'error': 'Buku tidak ditemukan'}
-
-            loan_list.append({
-                'loan_id': loan_dict['id'],
-                'member': member,
-                'book': book,
-                'tanggal_peminjaman': loan_dict['tanggal_peminjaman'],
-                'tanggal_jatuh_tempo': loan_dict['tanggal_jatuh_tempo'],
-                'tanggal_pengembalian': loan_dict['tanggal_pengembalian'],
-                'status': loan_dict['status'],
-                'denda': loan_dict['denda']
-            })
-        return jsonify(loan_list), 200
+        if count > 0:
+            return jsonify({'message': 'Buku tidak tersedia'}), 400
+        return jsonify({'message': 'Buku tersedia'}), 200
     except Exception as e:
-        return jsonify({'error': f'Gagal mengambil data peminjaman - {e}'}), 500
+        return jsonify({'error': f'Gagal memeriksa ketersediaan buku - {e}'}), 500
 
+
+# Fungsi untuk membuat peminjaman baru dengan validasi anggota dan buku
 @app.route('/loans', methods=['POST'])
 def create_loan():
     data = request.get_json()
@@ -103,7 +91,27 @@ def create_loan():
     except Exception as e:
         return jsonify({'error': f'Gagal membuat peminjaman - {e}'}), 500
 
-# Endpoint: Pengembalian Buku
+
+# Fungsi untuk membatalkan peminjaman yang belum dikembalikan
+@app.route('/loans/<int:loan_id>/cancel', methods=['DELETE'])
+def cancel_loan(loan_id):
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM loans WHERE id = ? AND status = 'dipinjam'", (loan_id,))
+            loan = cursor.fetchone()
+
+            if not loan:
+                return jsonify({'error': 'Peminjaman tidak ditemukan atau sudah dikembalikan'}), 404
+
+            cursor.execute("DELETE FROM loans WHERE id = ?", (loan_id,))
+            conn.commit()
+
+        return jsonify({'message': 'Peminjaman berhasil dibatalkan'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Gagal membatalkan peminjaman - {e}'}), 500
+
+# Fungsi untuk menangani pengembalian buku dan menghitung denda jika terlambat
 @app.route('/loans/<int:loan_id>/return', methods=['PATCH'])
 def return_loan(loan_id):
     try:
@@ -131,6 +139,66 @@ def return_loan(loan_id):
     except Exception as e:
         return jsonify({'error': f'Gagal melakukan pengembalian - {e}'}), 500
 
+# Fungsi untuk mengambil semua data peminjaman beserta informasi anggota dan buku terkait
+@app.route('/loans', methods=['GET'])
+def get_loans():
+    try:
+        with get_db_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM loans")
+            loans = cursor.fetchall()
+
+        loan_list = []
+        for loan in loans:
+            loan_dict = dict(loan)
+            member_resp = requests.get(f"http://localhost:5002/members/{loan_dict['member_id']}")
+            book_resp = requests.get(f"http://localhost:5001/books/{loan_dict['book_id']}")
+            member = member_resp.json() if member_resp.status_code == 200 else {'error': 'Anggota tidak ditemukan'}
+            book = book_resp.json() if book_resp.status_code == 200 else {'error': 'Buku tidak ditemukan'}
+
+            loan_list.append({
+                'loan_id': loan_dict['id'],
+                'member': member,
+                'book': book,
+                'tanggal_peminjaman': loan_dict['tanggal_peminjaman'],
+                'tanggal_jatuh_tempo': loan_dict['tanggal_jatuh_tempo'],
+                'tanggal_pengembalian': loan_dict['tanggal_pengembalian'],
+                'status': loan_dict['status'],
+                'denda': loan_dict['denda']
+            })
+        return jsonify(loan_list), 200
+    except Exception as e:
+        return jsonify({'error': f'Gagal mengambil data peminjaman - {e}'}), 500
+
+# Fungsi untuk mengambil riwayat peminjaman buku oleh anggota
+@app.route('/loans/history/<int:member_id>', methods=['GET'])
+def get_loan_history(member_id):
+    try:
+        with get_db_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM loans WHERE member_id = ?", (member_id,))
+            loans = cursor.fetchall()
+
+        loan_list = []
+        for loan in loans:
+            loan_dict = dict(loan)
+            loan_list.append({
+                'loan_id': loan_dict['id'],
+                'book_id': loan_dict['book_id'],
+                'tanggal_peminjaman': loan_dict['tanggal_peminjaman'],
+                'tanggal_jatuh_tempo': loan_dict['tanggal_jatuh_tempo'],
+                'tanggal_pengembalian': loan_dict['tanggal_pengembalian'],
+                'status': loan_dict['status'],
+                'denda': loan_dict['denda']
+            })
+        return jsonify(loan_list), 200
+    except Exception as e:
+        return jsonify({'error': f'Gagal mengambil riwayat peminjaman - {e}'}), 500
+
+
+# Menjalankan aplikasi Flask
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5003, debug=True)
