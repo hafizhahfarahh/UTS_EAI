@@ -26,7 +26,8 @@ def init_db():
                 CREATE TABLE IF NOT EXISTS books (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL,
-                    author TEXT NOT NULL
+                    author TEXT NOT NULL,
+                    year INTEGER
                 )
             ''')
             conn.commit()
@@ -41,23 +42,41 @@ def init_db():
 @app.route('/books', methods=['POST'])
 def create_book():
     if not request.is_json:
+        app.logger.error("Request is not JSON")
         return jsonify({"error": "Request harus berupa JSON"}), 400
     data = request.get_json()
     title = data.get('title')
     author = data.get('author')
+    year = data.get('year')
 
-    if not title or not author:
-        return jsonify({"error": "Judul dan penulis diperlukan"}), 400
+    if not title or not author or year is None:
+        app.logger.error(f"Missing data - title: {title}, author: {author}, year: {year}")
+        return jsonify({"error": "Judul, penulis, dan tahun terbit diperlukan"}), 400
 
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO books (title, author) VALUES (?, ?)", (title, author))
+            cursor.execute("INSERT INTO books (title, author, year) VALUES (?, ?, ?)", (title, author, year))
             conn.commit()
             book_id = cursor.lastrowid
-        return jsonify({'id': book_id, 'title': title, 'author': author}), 201
+        app.logger.info(f"Book created with ID {book_id}")
+        return jsonify({'id': book_id, 'title': title, 'author': author, 'year': year}), 201
     except Exception as e:
         app.logger.error(f"Error creating book: {e}")
+        return jsonify({'error': 'Kesalahan server internal'}), 500
+    
+# Endpoint: GET /books
+@app.route('/books', methods=['GET'])
+def get_all_books():
+    try:
+        with get_db_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, title, author, year FROM books")
+            books = [dict(row) for row in cursor.fetchall()]
+        return jsonify(books), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching books: {e}")
         return jsonify({'error': 'Kesalahan server internal'}), 500
 
 # Endpoint: GET /books/<int:book_id>
@@ -67,7 +86,7 @@ def get_book(book_id):
         with get_db_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT id, title, author FROM books WHERE id = ?", (book_id,))
+            cursor.execute("SELECT id, title, author, year FROM books WHERE id = ?", (book_id,))
             book = cursor.fetchone()
         if book:
             return jsonify(dict(book)), 200
