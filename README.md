@@ -136,14 +136,14 @@ Sistem ini terdiri dari 4 layanan utama, yaitu:
 
     - Loan-Service adalah consumer saat mengambil data dari Book-Service dan Member-Service. 
     Berikut interaksinya:
-    - Book-Service: GET `/books/<book_id>` (mengambil title dan author buku)
-    - Member-Service: GET `/members/<member_id>` (validasi member valid/aktif)
+        - Book-Service: GET `/books/<book_id>` (mengambil title dan author buku)
+        - Member-Service: GET `/members/<member_id>` (validasi member valid/aktif)
     
     - Loan-Service adalah provider bagi front-end/dashboard yang menampilkan atau mengelola data peminjaman, seperti:
-    - POST `/loans` (membuat peminjaman baru)
-    - GET `/loans` (menampilkan daftar peminjaman)
-    - PATCH `/loans/<loan_id>/return` (mengembalikan buku)
-    - DELETE `/loans/<loan_id>/cancel` (membatalkan peminjaman)
+        - POST `/loans` (membuat peminjaman baru)
+        - GET `/loans` (menampilkan daftar peminjaman)
+        - PATCH `/loans/<loan_id>/return` (mengembalikan buku)
+        - DELETE `/loans/<loan_id>/cancel` (membatalkan peminjaman)
         
 
 **Review_Service**
