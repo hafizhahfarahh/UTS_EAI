@@ -28,8 +28,8 @@ Sistem ini terdiri dari 4 layanan utama, yaitu:
     1. POST /reviews
     Deskripsi: Membuat review baru oleh anggota yang pernah melakukan peminjaman untuk buku tertentu
 
-    **-** Request Header: Content-Type: application/json
-    **-** Request Body:
+    - Request Header: Content-Type: application/json
+    - Request Body:
     {
     "book_id": 1,
     "member_id": 1,
@@ -37,7 +37,8 @@ Sistem ini terdiri dari 4 layanan utama, yaitu:
     "rating": 4,
     "comment": "Buku ini sangat informatif dan mudah dipahami!"
     }
-    **-** Response (201 Created): *contoh
+
+    - Response (201 Created): *contoh
     {
     "review_id": 1,
     "book": {
@@ -49,7 +50,8 @@ Sistem ini terdiri dari 4 layanan utama, yaitu:
     "rating": 5,
     "comment": "Buku ini sangat bagus!"
     }
-    **-** Status Code:
+
+    - Status Code:
         - 400 Bad Request jika payload tidak lengkap atau tidak JSON
         - 403 Forbidden jika member tidak aktif atau belum pernah meminjam buku
         - 500 Internal Server Error jika terjadi kegagalan di server
@@ -57,8 +59,8 @@ Sistem ini terdiri dari 4 layanan utama, yaitu:
     2. GET /reviews/book/<book_id>
     Deskripsi: Mengambil seluruh review untuk buku tertentu, beserta informasi buku
 
-    **-** Path Parameter: book_id (integer)
-    **-** Response (200 OK): *contoh
+    - Path Parameter: book_id (integer)
+    - Response (200 OK): *contoh
     {
     "book": {
         "id": 1,
@@ -76,25 +78,28 @@ Sistem ini terdiri dari 4 layanan utama, yaitu:
         }
     ]
     }
-    **-** Status Code:
+
+    - Status Code:
         - 200 OK jika berhasil
         - 500 Internal Server Error jika terjadi kegagalan di server
 
     3. PUT /reviews/<book_id>
     Deskripsi: Memperbarui rating dan/atau komentar pada review tertentu
 
-    **-** Path Parameter: book_id (integer)
-    **-** Request Header: application/json
-    **-** Request Body:
+    - Path Parameter: book_id (integer)
+    - Request Header: application/json
+    - Request Body:
     {
     "rating": 5,
     "comment": "Setelah dibaca, saya semakin suka buku ini!"
     }
-    **-** Response (200 OK):
+
+    - Response (200 OK):
     {
     "message": "Review berhasil diperbarui"
     }
-    **-** Status Code:
+
+    - Status Code:
         - 400 Bad Request jika rating tidak disertakan
         - 404 Not Found jika review_id tidak ditemukan
         - 500 Internal Server Error jika terjadi kegagalan di server
@@ -102,22 +107,24 @@ Sistem ini terdiri dari 4 layanan utama, yaitu:
     4. DELETE /reviews/<review_id>
     Deskripsi: Menghapus review berdasarkan ID
 
-    **-** Path Parameter: book_id (integer)
-    **-** Response (200 OK): *contoh
+    - Path Parameter: book_id (integer)
+    - Response (200 OK): *contoh
     {
     "message": "Review ID 1 berhasil dihapus"
     }
-    **-** Status Code:
+
+    - Status Code:
         - 404 Not Found jika review_id tidak ditemukan
         - 500 Internal Server Error jika terjadi kegagalan di server
 
 
 *Dokumentasi Komunikasi Antar Layanan*
 
-    **-** Review-Service adalah consumer saat mengambil data dari Book_Service, Member_Service, dan Loan_Service. Berikut interaksinya:
-        **-** Book_Service: GET /books/<book_id> (mengambil title dan author buku)
-        **-** Member_Service: GET /members/<member_id> (validasi member valid/aktif)
-        **-** Loan_Service: GET /loans (memeriksa apakah member/anggota pernah meminjam buku tersebut)
-    **-** Review_Service adalah provider bagi front-end/dashboard yang menampilkan atau mengelola review (jika ada)
+    - Review-Service adalah consumer saat mengambil data dari Book_Service, Member_Service, dan Loan_Service. Berikut interaksinya:
+        - Book_Service: GET /books/<book_id> (mengambil title dan author buku)
+        - Member_Service: GET /members/<member_id> (validasi member valid/aktif)
+        - Loan_Service: GET /loans (memeriksa apakah member/anggota pernah meminjam buku tersebut)
+        
+    - Review_Service adalah provider bagi front-end/dashboard yang menampilkan atau mengelola review (jika ada)
         **-** Front-end: /reviews, /reviews/book, PUT, DELETE (menyediakan data review untuk UI atau Dashboard)
 
