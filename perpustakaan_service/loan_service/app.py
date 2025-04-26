@@ -4,8 +4,10 @@ import contextlib
 from flask import Flask, request, jsonify
 import requests
 from datetime import datetime, timedelta
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 DB_NAME = "loan_data.db"
 DB_PATH = os.path.join(os.path.dirname(__file__), DB_NAME)
 

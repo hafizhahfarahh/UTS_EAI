@@ -3,8 +3,10 @@ import sqlite3
 import os
 import contextlib
 import requests
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 DB_NAME = "review_data.db"
 DB_PATH = os.path.join(os.path.dirname(__file__), DB_NAME)
 
@@ -18,20 +20,24 @@ def get_db_connection():
         conn.close()
 
 def init_db():
-    with get_db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS reviews (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                book_id INTEGER NOT NULL,
-                member_id INTEGER NOT NULL,
-                reviewer TEXT NOT NULL,
-                rating INTEGER CHECK(rating BETWEEN 1 AND 5),
-                comment TEXT
-            )
-        ''')
-        conn.commit()
-        print("ReviewService: Database diinisialisasi.")
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS reviews (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    book_id INTEGER NOT NULL,
+                    member_id INTEGER NOT NULL,
+                    reviewer TEXT NOT NULL,
+                    rating INTEGER CHECK(rating BETWEEN 1 AND 5),
+                    comment TEXT
+                )
+            ''')
+            conn.commit()
+        print(f"Provider Review: Database '{DB_NAME}' diinisialisasi.")
+    except Exception as h:
+        print(f"Provider Review: Gagal inisialisasi DB '{DB_NAME}' - {h}")
+        raise
 
 #Fungsi untuk mengambil data buku dari book_service
 def get_book_details(book_id):
@@ -74,16 +80,25 @@ def create_review():
 
     book_id = data.get('book_id')
     member_id = data.get('member_id')
-    reviewer = data.get('reviewer')
     rating = data.get('rating')
     comment = data.get('comment', '')
 
-    if not all([book_id, member_id, reviewer, rating]):
-        return jsonify({'error': 'book_id, member_id, reviewer, dan rating diperlukan'}), 400
+    if not all([book_id, member_id, rating]):
+        return jsonify({'error': 'book_id, member_id, dan rating diperlukan'}), 400
 
     # Validasi member
-    if not is_valid_member(member_id):
-        return jsonify({'error': 'Member tidak valid atau tidak aktif'}), 403
+    try:
+        response = requests.get(f'http://localhost:5002/members/{member_id}')
+        if response.status_code == 200:
+            member_data = response.json()
+            if not member_data.get('active', True):
+                return jsonify({'error': 'Member tidak aktif'}), 403
+            reviewer = member_data.get('name', f'Member-{member_id}')
+        else:
+            return jsonify({'error': 'Member tidak ditemukan'}), 404
+    except Exception as e:
+        app.logger.error(f"Gagal mengambil data member {member_id}: {e}")
+        return jsonify({'error': 'Kesalahan server saat mengambil data member'}), 500
 
     # Validasi apakah member sudah pernah meminjam buku
     if not has_borrowed_book(member_id, book_id):
@@ -115,6 +130,25 @@ def create_review():
         return jsonify({'error': 'Kesalahan server'}), 500
 
 #Endpoint: GET
+
+@app.route('/reviews', methods=['GET'])
+def get_all_reviews():
+    try:
+        with get_db_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM reviews")
+            reviews = cursor.fetchall()
+
+        return jsonify({
+            'total': len(reviews),
+            'reviews': [dict(r) for r in reviews]
+        }), 200
+    except Exception as e:
+        app.logger.error(f"Gagal mengambil seluruh review: {e}")
+        return jsonify({'error': 'Kesalahan server'}), 500
+
+
 @app.route('/reviews/book/<int:book_id>', methods=['GET'])
 def get_reviews_by_book(book_id):
     try:
@@ -135,6 +169,25 @@ def get_reviews_by_book(book_id):
     except Exception as e:
         app.logger.error(f"Gagal mengambil review: {e}")
         return jsonify({'error': 'Kesalahan server'}), 500
+    
+
+@app.route('/reviews/member/<int:member_id>', methods=['GET'])
+def get_reviews_by_member(member_id):
+    try:
+        with get_db_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM reviews WHERE member_id = ?", (member_id,))
+            reviews = cursor.fetchall()
+
+        return jsonify({
+            'member_id': member_id,
+            'reviews': [dict(r) for r in reviews]
+        }), 200
+    except Exception as e:
+        app.logger.error(f"Gagal mengambil review member {member_id}: {e}")
+        return jsonify({'error': 'Kesalahan server'}), 500
+
 
 #Endpoint: PUT
 @app.route('/reviews/<int:review_id>', methods=['PUT'])

@@ -3,9 +3,11 @@ import os
 import contextlib
 from flask import Flask, request, jsonify
 import requests  
+from flask_cors import CORS
 
 # --- Inisialisasi Aplikasi Flask ---
 app = Flask(__name__)
+CORS(app)
 DB_NAME = "member_data.db"
 DB_PATH = os.path.join(os.path.dirname(__file__), DB_NAME)
 
@@ -20,7 +22,6 @@ def get_db_connection():
         conn.close()
 
 def init_db():
-    """Inisialisasi database anggota (member_data.db) jika belum ada."""
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -39,7 +40,6 @@ def init_db():
 
 # --- Helper function untuk format data member ---
 def serialize_member(member):
-    """Mengatur urutan field JSON: id, name, phone_number."""
     return {
         'id': member['id'],
         'name': member['name'],
