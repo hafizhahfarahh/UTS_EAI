@@ -38,7 +38,6 @@ def init_db():
         print(f"Provider Anggota: Gagal inisialisasi DB '{DB_NAME}' - {e}")
         raise
 
-# --- Helper function untuk format data member ---
 def serialize_member(member):
     return {
         'id': member['id'],
@@ -154,7 +153,6 @@ def delete_member(member_id):
 @app.route('/members/<int:member_id>/loans', methods=['GET'])
 def get_member_loan_history(member_id):
     try:
-        # Periksa apakah anggota ada
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM members WHERE id = ?", (member_id,))
@@ -170,7 +168,7 @@ def get_member_loan_history(member_id):
             if response.status_code == 200:
                 loans = response.json()
                 
-                # Data informasi buku
+                # Data informasi buku dari book_service
                 enriched_loans = []
                 for loan in loans:
                     book_id = loan.get('book_id')
@@ -184,7 +182,6 @@ def get_member_loan_history(member_id):
                         
                     enriched_loans.append(loan)
                 
-                # Gabungkan data anggota dengan riwayat peminjaman
                 result = {
                     'member': serialize_member(member),
                     'loan_history': enriched_loans
@@ -206,7 +203,6 @@ def get_member_loan_history(member_id):
 @app.route('/members/<int:member_id>/summary', methods=['GET'])
 def get_member_summary(member_id):
     try:
-        # Ambil data anggota
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM members WHERE id = ?", (member_id,))
@@ -225,13 +221,12 @@ def get_member_summary(member_id):
             else:
                 loan_history = loan_response.json()
                 
-            # Hitung statistik peminjaman
+            # Statistik peminjaman
             total_loans = len(loan_history)
             active_loans = sum(1 for loan in loan_history if loan.get('status') == 'dipinjam')
             returned_loans = sum(1 for loan in loan_history if loan.get('status') == 'dikembalikan')
             total_fines = sum(loan.get('denda', 0) for loan in loan_history)
             
-            # Susun data ringkasan
             summary = {
                 'member': member_data,
                 'loan_stats': {

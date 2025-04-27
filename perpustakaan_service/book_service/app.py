@@ -98,13 +98,11 @@ def get_book(book_id):
         app.logger.error(f"Error fetching book {book_id}: {e}")
         return jsonify({'error': 'Kesalahan server internal'}), 500
 
-# --- Konsumer Endpoints ---
 
 # Endpoint: GET /books/<int:book_id>/reviews
 @app.route('/books/<int:book_id>/reviews', methods=['GET'])
 def get_book_reviews(book_id):
     try:
-        # Periksa apakah buku ada
         with get_db_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
@@ -151,7 +149,6 @@ def get_book_reviews(book_id):
 @app.route('/books/<int:book_id>/loan_status', methods=['GET'])
 def get_book_loan_status(book_id):
     try:
-        # Periksa apakah buku ada
         with get_db_connection() as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
