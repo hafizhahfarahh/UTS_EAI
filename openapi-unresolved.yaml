@@ -1,0 +1,1159 @@
+openapi: 3.0.3
+info:
+  title: Library Management System API
+  description: API documentation for the Library Management System microservices architecture
+  version: 1.0.0
+servers:
+  - url: http://localhost:5001
+    description: Book Service
+  - url: http://localhost:5002
+    description: Member Service
+  - url: http://localhost:5003
+    description: Loan Service
+  - url: http://localhost:5004
+    description: Review Service
+
+tags:
+  - name: Books
+    description: Book Service API
+  - name: Members
+    description: Member Service API
+  - name: Loans
+    description: Loan Service API
+  - name: Reviews
+    description: Review Service API
+
+paths:
+  # Book Service Endpoints
+  /books:
+    post:
+      tags:
+        - Books
+      summary: Create a new book
+      description: Add a new book to the library
+      operationId: createBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookRequest'
+      responses:
+        '201':
+          description: Book successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Books
+      summary: Get all books
+      description: Retrieve a list of all books in the library
+      operationId: getAllBooks
+      responses:
+        '200':
+          description: List of books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /books/{book_id}:
+    get:
+      tags:
+        - Books
+      summary: Get book by ID
+      description: Retrieve a specific book by its ID
+      operationId: getBookById
+      parameters:
+        - name: book_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the book to retrieve
+      responses:
+        '200':
+          description: Book details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /books/{book_id}/reviews:
+    get:
+      tags:
+        - Books
+      summary: Get book reviews
+      description: Retrieve reviews for a specific book
+      operationId: getBookReviews
+      parameters:
+        - name: book_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the book
+      responses:
+        '200':
+          description: Book with reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  book:
+                    $ref: '#/components/schemas/Book'
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /books/{book_id}/loan_status:
+    get:
+      tags:
+        - Books
+      summary: Get book loan status
+      description: Check if a book is available for loan
+      operationId: getBookLoanStatus
+      parameters:
+        - name: book_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the book
+      responses:
+        '200':
+          description: Book availability status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Book'
+                  - type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "tersedia"
+                      message:
+                        type: string
+                        example: "Buku tersedia untuk dipinjam"
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  # Member Service Endpoints
+  /members:
+    post:
+      tags:
+        - Members
+      summary: Create a new member
+      description: Register a new library member
+      operationId: createMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberRequest'
+      responses:
+        '201':
+          description: Member successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Members
+      summary: Get all members
+      description: Retrieve a list of all library members
+      operationId: getAllMembers
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /members/{member_id}:
+    get:
+      tags:
+        - Members
+      summary: Get member by ID
+      description: Retrieve a specific member by ID
+      operationId: getMemberById
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the member
+      responses:
+        '200':
+          description: Member details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Members
+      summary: Update member
+      description: Update member information
+      operationId: updateMember
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberRequest'
+      responses:
+        '200':
+          description: Member successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Anggota berhasil diperbarui"
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Members
+      summary: Delete member
+      description: Remove a member from the library
+      operationId: deleteMember
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the member
+      responses:
+        '200':
+          description: Member successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Anggota berhasil dihapus"
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /members/{member_id}/loans:
+    get:
+      tags:
+        - Members
+      summary: Get member loan history
+      description: Retrieve a member's loan history
+      operationId: getMemberLoanHistory
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the member
+      responses:
+        '200':
+          description: Member's loan history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  member:
+                    $ref: '#/components/schemas/Member'
+                  loan_history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoanWithBookInfo'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Loan service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /members/{member_id}/summary:
+    get:
+      tags:
+        - Members
+      summary: Get member summary
+      description: Retrieve a summary of member's activity
+      operationId: getMemberSummary
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the member
+      responses:
+        '200':
+          description: Member summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  member:
+                    $ref: '#/components/schemas/Member'
+                  loan_stats:
+                    type: object
+                    properties:
+                      total_loans:
+                        type: integer
+                        example: 5
+                      active_loans:
+                        type: integer
+                        example: 2
+                      returned_loans:
+                        type: integer
+                        example: 3
+                      total_fines:
+                        type: integer
+                        example: 5000
+                  loan_history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Loan'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  # Loan Service Endpoints
+  /books/{book_id}/check_availability:
+    get:
+      tags:
+        - Loans
+      summary: Check book availability
+      description: Check if a book is available for loan
+      operationId: checkBookAvailability
+      parameters:
+        - name: book_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the book
+      responses:
+        '200':
+          description: Book is available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Buku tersedia"
+        '400':
+          description: Book is not available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Buku tidak tersedia"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /loans:
+    post:
+      tags:
+        - Loans
+      summary: Create a new loan
+      description: Borrow a book
+      operationId: createLoan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - member_id
+                - book_id
+              properties:
+                member_id:
+                  type: integer
+                  example: 1
+                book_id:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Loan successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Peminjaman berhasil dibuat"
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Member or book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Loans
+      summary: Get all loans
+      description: Retrieve all loans with member and book details
+      operationId: getAllLoans
+      responses:
+        '200':
+          description: List of loans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoanWithDetails'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /loans/{loan_id}/cancel:
+    delete:
+      tags:
+        - Loans
+      summary: Cancel loan
+      description: Cancel a loan that hasn't been returned yet
+      operationId: cancelLoan
+      parameters:
+        - name: loan_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the loan
+      responses:
+        '200':
+          description: Loan successfully cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Peminjaman berhasil dibatalkan"
+        '404':
+          description: Loan not found or already returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /loans/{loan_id}/return:
+    patch:
+      tags:
+        - Loans
+      summary: Return book
+      description: Return a borrowed book and calculate fines if any
+      operationId: returnLoan
+      parameters:
+        - name: loan_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the loan
+      responses:
+        '200':
+          description: Book successfully returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Pengembalian berhasil"
+                  denda:
+                    type: integer
+                    example: 0
+        '404':
+          description: Loan not found or already returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /loans/history/{member_id}:
+    get:
+      tags:
+        - Loans
+      summary: Get member loan history
+      description: Retrieve loan history for a specific member
+      operationId: getLoanHistory
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the member
+      responses:
+        '200':
+          description: Member's loan history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Loan'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  # Review Service Endpoints
+  /reviews:
+    post:
+      tags:
+        - Reviews
+      summary: Create a new review
+      description: Add a review for a book
+      operationId: createReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - book_id
+                - member_id
+                - rating
+              properties:
+                book_id:
+                  type: integer
+                  example: 1
+                member_id:
+                  type: integer
+                  example: 1
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 4
+                comment:
+                  type: string
+                  example: "Buku yang sangat menarik!"
+      responses:
+        '201':
+          description: Review successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  review_id:
+                    type: integer
+                    example: 1
+                  book:
+                    $ref: '#/components/schemas/Book'
+                  reviewer:
+                    type: string
+                    example: "John Doe"
+                  rating:
+                    type: integer
+                    example: 4
+                  comment:
+                    type: string
+                    example: "Buku yang sangat menarik!"
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Member not active or hasn't borrowed the book
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Reviews
+      summary: Get all reviews
+      description: Retrieve all reviews in the system
+      operationId: getAllReviews
+      responses:
+        '200':
+          description: List of all reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 10
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /reviews/book/{book_id}:
+    get:
+      tags:
+        - Reviews
+      summary: Get reviews by book
+      description: Retrieve all reviews for a specific book
+      operationId: getReviewsByBook
+      parameters:
+        - name: book_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the book
+      responses:
+        '200':
+          description: Reviews for the book
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  book:
+                    $ref: '#/components/schemas/Book'
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /reviews/member/{member_id}:
+    get:
+      tags:
+        - Reviews
+      summary: Get reviews by member
+      description: Retrieve all reviews submitted by a specific member
+      operationId: getReviewsByMember
+      parameters:
+        - name: member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the member
+      responses:
+        '200':
+          description: Reviews by the member
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  member_id:
+                    type: integer
+                    example: 1
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /reviews/{review_id}:
+    put:
+      tags:
+        - Reviews
+      summary: Update review
+      description: Update an existing review
+      operationId: updateReview
+      parameters:
+        - name: review_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 5
+                comment:
+                  type: string
+                  example: "Sangat direkomendasikan!"
+      responses:
+        '200':
+          description: Review successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Review berhasil diperbarui"
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Reviews
+      summary: Delete review
+      description: Delete an existing review
+      operationId: deleteReview
+      parameters:
+        - name: review_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the review
+      responses:
+        '200':
+          description: Review successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Review ID 1 berhasil dihapus"
+        '404':
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Harry Potter and the Philosopher's Stone"
+        author:
+          type: string
+          example: "J.K. Rowling"
+        year:
+          type: integer
+          example: 1997
+    
+    BookRequest:
+      type: object
+      required:
+        - title
+        - author
+        - year
+      properties:
+        title:
+          type: string
+          example: "Harry Potter and the Philosopher's Stone"
+        author:
+          type: string
+          example: "J.K. Rowling"
+        year:
+          type: integer
+          example: 1997
+    
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        phone_number:
+          type: string
+          example: "+62812345678"
+    
+    MemberRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "John Doe"
+        phone_number:
+          type: string
+          example: "+62812345678"
+    
+    Loan:
+      type: object
+      properties:
+        loan_id:
+          type: integer
+          example: 1
+        book_id:
+          type: integer
+          example: 1
+        tanggal_peminjaman:
+          type: string
+          format: date
+          example: "2025-04-21"
+        tanggal_jatuh_tempo:
+          type: string
+          format: date
+          example: "2025-04-28"
+        tanggal_pengembalian:
+          type: string
+          format: date
+          nullable: true
+          example: null
+        status:
+          type: string
+          enum: [dipinjam, dikembalikan]
+          example: "dipinjam"
+        denda:
+          type: integer
+          example: 0
+    
+    LoanWithDetails:
+      type: object
+      properties:
+        loan_id:
+          type: integer
+          example: 1
+        member:
+          $ref: '#/components/schemas/Member'
+        book:
+          $ref: '#/components/schemas/Book'
+        tanggal_peminjaman:
+          type: string
+          format: date
+          example: "2025-04-21"
+        tanggal_jatuh_tempo:
+          type: string
+          format: date
+          example: "2025-04-28"
+        tanggal_pengembalian:
+          type: string
+          format: date
+          nullable: true
+          example: null
+        status:
+          type: string
+          enum: [dipinjam, dikembalikan]
+          example: "dipinjam"
+        denda:
+          type: integer
+          example: 0
+    
+    LoanWithBookInfo:
+      type: object
+      properties:
+        loan_id:
+          type: integer
+          example: 1
+        book_id:
+          type: integer
+          example: 1
+        book_info:
+          $ref: '#/components/schemas/Book'
+        tanggal_peminjaman:
+          type: string
+          format: date
+          example: "2025-04-21"
+        tanggal_jatuh_tempo:
+          type: string
+          format: date
+          example: "2025-04-28"
+        tanggal_pengembalian:
+          type: string
+          format: date
+          nullable: true
+          example: null
+        status:
+          type: string
+          enum: [dipinjam, dikembalikan]
+          example: "dipinjam"
+        denda:
+          type: integer
+          example: 0
+    
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        book_id:
+          type: integer
+          example: 1
+        member_id:
+          type: integer
+          example: 1
+        reviewer:
+          type: string
+          example: "John Doe"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+        comment:
+          type: string
+          example: "Buku yang sangat menarik!"
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Kesalahan server internal"

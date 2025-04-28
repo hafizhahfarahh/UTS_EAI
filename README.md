@@ -11,7 +11,9 @@ Sistem ini terdiri dari 4 layanan utama, yaitu:
 3. **Loan_Service**, yaitu untuk mengelola aktivitas peminjaman buku oleh angggota.
 4. **Review_Service**, yaitu untuk mengelola ulasan atau review yang diberikan oleh anggota terhadap buku yang telah dipinjam.
 
-## Book_Service**
+*Dokumentasi lengkap terdapat pada file openapi-unresolved
+
+## Book_Service
 ### Dokumentasi API
 Base URL : http://localhost:5003
     1.  GET /books/<int:book_id>/check_availability
@@ -682,10 +684,13 @@ http://127.0.0.1:5004/reviews/book/1
 ### Dokumentasi Komunikasi Antar Layanan
 
     - Review-Service adalah consumer saat mengambil data dari Book_Service, Member_Service, dan Loan_Service. Berikut interaksinya:
-        - Book_Service: GET /books/<book_id> (mengambil title dan author buku)
+        - Book_Service: GET /books/<book_id> (mengambil detail buku yaitu title dan author buku saat membuat atau menampilkam review)
         - Member_Service: GET /members/<member_id> (validasi member valid/aktif)
-        - Loan_Service: GET /loans (memeriksa apakah member/anggota pernah meminjam buku tersebut)
+        - Loan_Service: GET /loans (memastikan bahwa member sudah pernah meminjam buku tersebut sebelum diperbolehkan membuat review)
         
-    - Review_Service adalah provider bagi front-end/dashboard yang menampilkan atau mengelola review (jika ada)
-        **-** Front-end: /reviews, /reviews/book, PUT, DELETE (menyediakan data review untuk UI atau Dashboard)
-
+    - Review_Service menyediakan API yang bisa digunakan oleh layanan lain atau pengguna eksternal. Berikut interaksinya
+        - Book_Service: GET /reviews/book/<book_id> (menyediakan daftar review untuk buku tertentu)
+        - Member_Service: GET /reviews/member/<member_id> (menyediakan daftar review yang dibuat oleh seorang member)
+        - Frontend: POST /reviews (membuat daftar review yang dibuat oleh seorang member)
+        - Frontend: PUT /reviews/<review_id> (memperbarui atau mengedit isi review)
+        - Frontend: DELETE /reviews/<review_id> (menghapus review tertentu)
