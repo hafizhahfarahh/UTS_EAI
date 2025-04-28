@@ -140,6 +140,15 @@
         <div class="col-md-auto">
           <button onclick="loadAllReviews()" class="btn btn-outline-info w-100">Lihat Semua Review</button>
         </div>
+        <div class="row g-2 mb-3">
+          <div class="col-md">
+            <input type="number" id="reviewSearchMemberId" class="form-control" placeholder="Cari Review berdasarkan ID Member">
+          </div>
+          <div class="col-md-auto">
+            <button onclick="searchReviewsByMember()" class="btn btn-outline-info w-100">Cari Review Member</button>
+          </div>
+        </div>
+        
       </div>
       <textarea id="reviewComment" class="form-control mb-3" placeholder="Komentar"></textarea>
       
@@ -585,6 +594,107 @@
       console.error('Error loading book reviews:', error);
     }
   }
+
+  async function searchReviewsByMember() {
+  const memberId = parseInt(document.getElementById('reviewSearchMemberId').value);
+  if (!memberId) {
+    showAlert('Masukkan ID member terlebih dahulu!', 'warning');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${baseReview}/member/${memberId}`);
+    if (!response.ok) {
+      throw new Error('Gagal mengambil review member');
+    }
+    
+    const data = await response.json();
+    const reviews = data.reviews;
+
+    if (reviews.length === 0) {
+      document.getElementById('reviewTitle').innerHTML = `<strong>Review dari Member ID ${memberId}</strong> (Belum ada review)`;
+      document.getElementById('reviewList').innerHTML = '<div class="alert alert-info">Member ini belum memberikan review.</div>';
+    } else {
+      document.getElementById('reviewTitle').innerHTML = `<strong>Review dari Member ID ${memberId}</strong>`;
+      displayReviews(reviews);
+    }
+
+    document.getElementById('reviewListContainer').scrollIntoView({ behavior: 'smooth' });
+
+  } catch (error) {
+    showAlert('Gagal memuat review member!', 'danger');
+    console.error('Error loading member reviews:', error);
+  }
+}
+
+
+
+  async function editReview(id, rating, comment) {
+  document.getElementById('reviewRating').value = rating;
+  document.getElementById('reviewComment').value = comment;
+  
+  const btn = document.querySelector('button[onclick="submitReview()"]');
+  btn.textContent = 'Update Review';
+  btn.classList.remove('btn-info');
+  btn.classList.add('btn-warning');
+  btn.setAttribute('onclick', `updateReview(${id})`);
+}
+
+async function updateReview(id) {
+  const rating = parseInt(document.getElementById('reviewRating').value);
+  const comment = document.getElementById('reviewComment').value;
+
+  if (!rating) {
+    showAlert('Rating diperlukan!', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${baseReview}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating, comment })
+    });
+
+    if (res.ok) {
+      showAlert('Review berhasil diperbarui!');
+      document.getElementById('reviewRating').value = '';
+      document.getElementById('reviewComment').value = '';
+      
+      const btn = document.querySelector('button[onclick^="updateReview"]');
+      btn.textContent = 'Kirim Review';
+      btn.classList.remove('btn-warning');
+      btn.classList.add('btn-info');
+      btn.setAttribute('onclick', 'submitReview()');
+
+      loadAllReviews();
+    } else {
+      showAlert('Gagal memperbarui review!', 'danger');
+    }
+  } catch {
+    showAlert('Gagal memperbarui review!', 'danger');
+  }
+}
+
+async function deleteReview(id) {
+  if (!confirm('Yakin ingin menghapus review ini?')) return;
+
+  try {
+    const res = await fetch(`${baseReview}/${id}`, {
+      method: 'DELETE'
+    });
+
+    if (res.ok) {
+      showAlert('Review berhasil dihapus!');
+      loadAllReviews();
+    } else {
+      showAlert('Gagal menghapus review!', 'danger');
+    }
+  } catch {
+    showAlert('Gagal menghapus review!', 'danger');
+  }
+}
+
   
   // Menampilkan review
   function displayReviews(reviews) {
@@ -599,6 +709,7 @@
                   <th>Reviewer</th>
                   <th>Rating</th>
                   <th>Komentar</th>
+                  <th>Aksi<>
                 </tr>
               </thead>
               <tbody>`;
@@ -612,6 +723,10 @@
                   <td>${review.reviewer}</td>
                   <td><span class="star-rating">${stars}</span></td>
                   <td>${review.comment || '-'}</td>
+                  <td>
+                    <button onclick="editReview(${review.id}, ${review.rating}, '${(review.comment || '').replace(/'/g, "\\'")}')" class="btn btn-sm btn-warning me-1">Edit</button>
+                    <button onclick="deleteReview(${review.id})" class="btn btn-sm btn-danger">Hapus</button>
+
                 </tr>`;
       });
       
