@@ -32,6 +32,8 @@ Masing-masing layanan memiliki database SQLite lokal.
 - **Review Service**: book_data.db
 
 ## Struktur Folder
+
+```
 perpustakaan_system/
 ├── book_service/
 │   ├── app.py
@@ -54,6 +56,8 @@ perpustakaan_system/
 │   └── requirements.txt
 │
 └── README.md
+```
+
 
 ---
 
@@ -188,13 +192,12 @@ Review_Service menyediakan API yang bisa digunakan oleh layanan lain atau penggu
 - Frontend: DELETE /reviews/<review_id> (menghapus review tertentu)
 
 ---
-## Catatan Tambahan
-- Semua komunikasi menggunakan protokol HTTP lokal (`localhost`).
-- Semua request antar service bersifat **synchronous** (menggunakan `requests` Python).
-- Tidak ada message queue atau event-driven architecture.
-- Port:
-  - Book Service: `5001`
-  - Member Service: `5002`
-  - Loan Service: `5003`
-  - Review Service: `5004`
-- Jika salah satu service mati, fitur yang tergantung pada service tersebut akan mengembalikan error JSON.
+## Anggota Kelompok
+
+- Hafizhah Farah Fadhila 1202220154
+- Elsa Tria Lestari 1202220350
+- Ceria Indah Jelita 1202223121
+- Dhimas Faza Wicaksana 1202223161
+
+
+
